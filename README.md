@@ -1,4 +1,10 @@
-# 🧠 JCore — Johan's Interpreted Language
+
+<p align="center">
+  <img src="logo.png" alt="JCore Logo" height="80" align="left"/>
+  <h1 > JCore — Johan's Interpreted Language</h1>
+</p>
+
+
 
 **JCore** is a clean, minimal scripting language built in C# with:
 
