@@ -16,39 +16,34 @@ namespace JCore
                 switch (node)
                 {
                     case SayNode say:
-                        if (say.IsVariable)
-                        {
-                            if (variables.TryGetValue(say.Value, out var val))
-                                Console.WriteLine(val);
-                            else
-                                Console.WriteLine($"❌ Undefined variable '{say.Value}'");
-                        }
-                        else
-                        {
-                            Console.WriteLine(say.Value);
-                        }
-                        break;
-
-
+                        var result = Evaluate(say.Expression);
+                        Console.WriteLine(result);
                         break;
 
                     case LetNode let:
                         if (constants.Contains(let.Name))
+                        {
                             Console.WriteLine($"❌ Cannot overwrite constant '{let.Name}' with let.");
+                        }
                         else
-                            variables[let.Name] = Evaluate(let.Value).ToString();
+                        {
+                            var value = Evaluate(let.Value);
+                            variables[let.Name] = value.ToString();
+                        }
                         break;
 
                     case ConstNode constant:
                         if (constants.Contains(constant.Name))
+                        {
                             Console.WriteLine($"❌ Constant '{constant.Name}' already defined.");
+                        }
                         else
                         {
-                            variables[constant.Name] = Evaluate(constant.Value).ToString();
+                            var value = Evaluate(constant.Value);
+                            variables[constant.Name] = value.ToString();
                             constants.Add(constant.Name);
                         }
                         break;
-
 
                     case UnknownNode unknown:
                         Console.WriteLine($"❌ Unknown command: {unknown.Command}");
@@ -61,14 +56,13 @@ namespace JCore
             }
         }
 
-
-
-        private BigInteger Evaluate(Node node)
+        private object Evaluate(Node node)
         {
             return node switch
             {
                 NumberNode n => n.Value,
-                VariableNode v => BigInteger.TryParse(variables.GetValueOrDefault(v.Name), out var val)
+                StringNode s => s.Value,
+                VariableNode v => variables.TryGetValue(v.Name, out var val)
                     ? val
                     : throw new Exception($"❌ Undefined variable '{v.Name}'"),
                 BinaryOpNode b => EvaluateOp(Evaluate(b.Left), b.Operator, Evaluate(b.Right)),
@@ -76,27 +70,22 @@ namespace JCore
             };
         }
 
-
-        private BigInteger EvaluateOp(BigInteger left, string op, BigInteger right)
+        private BigInteger EvaluateOp(object left, string op, object right)
         {
+            if (!BigInteger.TryParse(left.ToString(), out var l))
+                throw new Exception($"❌ Cannot perform math on '{left}'");
+
+            if (!BigInteger.TryParse(right.ToString(), out var r))
+                throw new Exception($"❌ Cannot perform math on '{right}'");
+
             return op switch
             {
-                "PLUS" => left + right,
-                "MINUS" => left - right,
-                "STAR" => left * right,
-                "SLASH" => right != 0 ? left / right : throw new Exception("❌ Division by zero"),
+                "PLUS" => l + r,
+                "MINUS" => l - r,
+                "STAR" => l * r,
+                "SLASH" => r != 0 ? l / r : throw new Exception("❌ Division by zero"),
                 _ => throw new Exception($"❌ Unknown operator '{op}'")
             };
         }
-
-
-
-
     }
-
-
-
-
-
-
 }

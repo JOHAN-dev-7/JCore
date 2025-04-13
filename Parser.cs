@@ -1,12 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Xml.Linq;
 using System.Numerics;
-
 
 namespace JCore
 {
-
-
     public class LetNode : Node
     {
         public string Name { get; }
@@ -31,12 +27,9 @@ namespace JCore
         }
     }
 
-
-
-
     public class Parser
     {
-        private List<Token> _tokens;
+        private readonly List<Token> _tokens;
         private int _pos = 0;
 
         public Parser(List<Token> tokens)
@@ -54,10 +47,67 @@ namespace JCore
             return nodes;
         }
 
+        private Node ParseStatement()
+        {
+            if (Match("SAY"))
+            {
+                if (IsAtEnd())
+                    throw new System.Exception("Expected something after 'say'");
 
+                var expr = ParseExpression();
+                return new SayNode(expr);
+            }
+
+            if (Match("LET"))
+            {
+                if (IsAtEnd())
+                    throw new System.Exception("Expected variable name after 'let'");
+
+                var name = Consume("IDENT").Value;
+
+                if (IsAtEnd())
+                    throw new System.Exception("Expected '=' after variable name");
+
+                Consume("EQUAL");
+
+                if (IsAtEnd())
+                    throw new System.Exception("Expected value after '='");
+
+                var expr = ParseExpression();
+                return new LetNode(name, expr);
+            }
+
+            if (Match("MAKE"))
+            {
+                if (IsAtEnd())
+                    throw new System.Exception("Expected constant name after 'make'");
+
+                var name = Consume("IDENT").Value;
+
+                if (IsAtEnd())
+                    throw new System.Exception("Expected '=' after constant name");
+
+                Consume("EQUAL");
+
+                if (IsAtEnd())
+                    throw new System.Exception("Expected value after '='");
+
+                var expr = ParseExpression();
+                return new ConstNode(name, expr);
+            }
+
+            if (IsAtEnd())
+                throw new System.Exception("Unexpected end of input");
+
+            var unknown = _tokens[_pos++];
+            return new UnknownNode(unknown.Value);
+        }
 
         private Node ParseExpression(int precedence = 0)
         {
+            if (IsAtEnd())
+                throw new System.Exception("Unexpected end of expression");
+
             Node left;
 
             var token = _tokens[_pos++];
@@ -65,6 +115,10 @@ namespace JCore
             if (token.Type == "NUMBER")
             {
                 left = new NumberNode(BigInteger.Parse(token.Value));
+            }
+            else if (token.Type == "STRING")
+            {
+                left = new StringNode(token.Value);
             }
             else if (token.Type == "IDENT")
             {
@@ -104,75 +158,20 @@ namespace JCore
             };
         }
 
-
-
-
-
-
-
-        private Node ParseStatement()
-        {
-            if (Match("SAY"))
-            {
-                if (IsAtEnd()) throw new Exception("Expected something after 'say'");
-
-                var next = _tokens[_pos++];
-
-                if (next.Type == "STRING")
-                    return new SayNode(next.Value, false);
-                else if (next.Type == "IDENT")
-                    return new SayNode(next.Value, true);
-                else
-                    throw new Exception("Expected a string or variable name after 'say'");
-            }
-
-
-            else if (Match("LET"))
-            {
-                if (IsAtEnd()) throw new Exception("Expected variable name after 'let'");
-
-                var name = Consume("IDENT").Value;
-                Consume("EQUAL");
-
-                var expr = ParseExpression();
-                return new LetNode(name, expr);
-            }
-            else if (Match("MAKE"))
-            {
-                if (IsAtEnd()) throw new Exception("Expected constant name after 'make'");
-
-                var name = Consume("IDENT").Value;
-                Consume("EQUAL");
-
-                var expr = ParseExpression();
-                return new ConstNode(name, expr);
-            }
-
-
-
-
-            var unknown = _tokens[_pos++];
-            return new UnknownNode(unknown.Value);
-        }
-
-
-
         private Token Consume(params string[] expectedTypes)
         {
+            if (IsAtEnd())
+                throw new System.Exception($"Expected {string.Join(" or ", expectedTypes)} but found end of input");
+
             var token = _tokens[_pos];
-            foreach (var type in expectedTypes)
-            {
-                if (token.Type == type)
-                {
-                    _pos++;
-                    return token;
-                }
-            }
-            throw new System.Exception($"Expected token of type: {string.Join(" or ", expectedTypes)}");
+            if (System.Array.IndexOf(expectedTypes, token.Type) == -1)
+                throw new System.Exception($"Expected token of type: {string.Join(" or ", expectedTypes)}, but got '{token.Value}'");
+
+            _pos++;
+            return token;
         }
 
-
-        private bool Match(string type)//ed
+        private bool Match(string type)
         {
             if (IsAtEnd()) return false;
             if (_tokens[_pos].Type == type)

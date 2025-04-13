@@ -4,14 +4,11 @@
 
     public class SayNode : Node
     {
-        public string Value { get; }
-        public bool IsVariable { get; }
+        public Node Expression { get; }
 
-        public SayNode(string value, bool isVariable)
+        public SayNode(Node expression)
         {
-            Value = value;
-            IsVariable = isVariable;
+            Expression = expression;
         }
     }
-
 }

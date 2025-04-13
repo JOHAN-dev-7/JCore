@@ -8,6 +8,7 @@ namespace JCore
     {
         public string Type { get; set; }
         public string Value { get; set; }
+
         public Token(string type, string value)
         {
             Type = type;
@@ -19,6 +20,28 @@ namespace JCore
     {
         private string _code;
 
+        private static readonly Dictionary<string, string> Keywords = new()
+        {
+            { "say", "SAY" },
+            { "let", "LET" },
+            { "make", "MAKE" }
+        };
+
+        private static readonly Dictionary<string, string> Operators = new()
+        {
+            { "=", "EQUAL" },
+            { "+", "PLUS" },
+            { "-", "MINUS" },
+            { "*", "STAR" },
+            { "/", "SLASH" },
+            { "(", "LPAREN" },
+            { ")", "RPAREN" }
+        };
+
+        private static readonly Regex TokenPattern = new(
+            @"(?<STRING>""[^""\\]*(?:\\.[^""\\]*)*"")|(?<OP>[=+\-*/()])|(?<NUMBER>\d+)|(?<IDENT>[a-zA-Z_][a-zA-Z0-9_]*)",
+            RegexOptions.Compiled);
+
         public Lexer(string code)
         {
             _code = code;
@@ -28,74 +51,60 @@ namespace JCore
         {
             var tokens = new List<Token>();
 
-            // 1️⃣ Remove multiline block comments: /* ... */
             _code = Regex.Replace(_code, @"/\*.*?\*/", "", RegexOptions.Singleline);
 
-            // 2️⃣ Then split into lines and strip single-line comments
             var lines = _code.Split('\n');
-
-            foreach (var line in lines)
+            foreach (var rawLine in lines)
             {
-                string codeLine = line.Split("//")[0].Trim(); // Remove inline comments
-                if (string.IsNullOrWhiteSpace(codeLine)) continue;
+                var line = StripInlineComment(rawLine.Trim());
+                if (string.IsNullOrWhiteSpace(line)) continue;
 
-                // Tokenize this cleaned line
-                var words = Regex.Matches(codeLine, @"\""[^""]*\""|[\+\-\*/\(\)=]|\n|\r|\t|\s+|[^\s\+\-\*/\(\)=]+");
-
-                foreach (Match word in words)
+                var matches = TokenPattern.Matches(line);
+                foreach (Match match in matches)
                 {
-                    var text = word.Value;
-                    if (string.IsNullOrWhiteSpace(text)) continue;
-
-                    switch (text)
+                    if (match.Groups["STRING"].Success)
                     {
-                        case "say":
-                            tokens.Add(new Token("SAY", text));
-                            break;
-                        case "let":
-                            tokens.Add(new Token("LET", text));
-                            break;
-                        case "make":
-                            tokens.Add(new Token("MAKE", text));
-                            break;
-                        case "=":
-                            tokens.Add(new Token("EQUAL", text));
-                            break;
-                        case "+":
-                            tokens.Add(new Token("PLUS", text));
-                            break;
-                        case "-":
-                            tokens.Add(new Token("MINUS", text));
-                            break;
-                        case "*":
-                            tokens.Add(new Token("STAR", text));
-                            break;
-                        case "/":
-                            tokens.Add(new Token("SLASH", text));
-                            break;
-                        case "(":
-                            tokens.Add(new Token("LPAREN", text));
-                            break;
-                        case ")":
-                            tokens.Add(new Token("RPAREN", text));
-                            break;
-                        default:
-                            if (text.StartsWith("\"") && text.EndsWith("\""))
-                                tokens.Add(new Token("STRING", text.Trim('"')));
-                            else if (Regex.IsMatch(text, @"^\d+$"))
-                                tokens.Add(new Token("NUMBER", text));
-
-                            else
-                                tokens.Add(new Token("IDENT", text));//g
-                            break;
+                        var raw = match.Groups["STRING"].Value;
+                        var str = raw.Substring(1, raw.Length - 2);
+                        tokens.Add(new Token("STRING", str));
                     }
-
+                    else if (match.Groups["NUMBER"].Success)
+                    {
+                        tokens.Add(new Token("NUMBER", match.Groups["NUMBER"].Value));
+                    }
+                    else if (match.Groups["IDENT"].Success)
+                    {
+                        var value = match.Groups["IDENT"].Value;
+                        if (Keywords.TryGetValue(value, out var keywordType))
+                            tokens.Add(new Token(keywordType, value));
+                        else
+                            tokens.Add(new Token("IDENT", value));
+                    }
+                    else if (match.Groups["OP"].Success)
+                    {
+                        var op = match.Groups["OP"].Value;
+                        if (Operators.TryGetValue(op, out var opType))
+                            tokens.Add(new Token(opType, op));
+                        else
+                            throw new Exception($"Unknown operator: {op}");
+                    }
                 }
             }
 
             return tokens;
         }
 
+        private string StripInlineComment(string line)
+        {
+            bool inString = false;
+            for (int i = 0; i < line.Length - 1; i++)
+            {
+                if (line[i] == '"') inString = !inString;
 
+                if (!inString && line[i] == '/' && line[i + 1] == '/')
+                    return line.Substring(0, i).Trim();
+            }
+            return line;
+        }
     }
 }

@@ -1,8 +1,6 @@
-﻿// === Program.cs (updated) ===
-using System;
+﻿using System;
 using System.IO;
-using System.Diagnostics; // Add this at the top
-
+using System.Diagnostics;
 
 namespace JCore
 {
@@ -14,44 +12,67 @@ namespace JCore
 
             if (args.Length == 0)
             {
-                Console.WriteLine("💡 JCore REPL mode. Type 'exit' to quit.\n");
+                RunRepl(interpreter);
+            }
+            else
+            {
+                var path = string.Join(" ", args);  // Handles spaces
+                RunFile(interpreter, path);
+            }
+        }
 
-                while (true)
+        static void RunRepl(Interpreter interpreter)
+        {
+            Console.WriteLine("💡 JCore Beta 1.0.0 REPL mode. Type 'exit' to quit.\n");
+
+            while (true)
+            {
+                Console.Write("> ");
+                var line = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(line) || line.Trim().ToLower() == "exit")
+                    break;
+
+                try
                 {
-                    Console.Write("> ");
-                    var line = Console.ReadLine();
-                    if (line == null || line.Trim().ToLower() == "exit")
-                        break;
-
                     var lexer = new Lexer(line);
                     var tokens = lexer.Tokenize();
                     var parser = new Parser(tokens);
                     var statements = parser.Parse();
-                    // Inside Main method, before interpreter.Run(statements);
-                    var stopwatch = Stopwatch.StartNew();
-                   /* interpreter.Run(statements);
-                    stopwatch.Stop();
-
-                    Console.WriteLine($"\n⏱ Execution Time: {stopwatch.ElapsedMilliseconds} ms");*/
                     interpreter.Run(statements);
                 }
-            }
-            else
-            {
-                var path = string.Join(" ", args);  // handles drag-and-drop with spaces
-                if (!File.Exists(path))
+                catch (Exception ex)
                 {
-                    Console.WriteLine($"❌ File not found: {path}");
-                    return;
+                    Console.WriteLine($"❌ Syntax error: {ex.Message}");
                 }
+            }
+        }
 
+        static void RunFile(Interpreter interpreter, string path)
+        {
+            if (!File.Exists(path))
+            {
+                Console.WriteLine($"❌ File not found: {path}");
+                return;
+            }
+
+            try
+            {
                 var code = File.ReadAllText(path);
+
+                var stopwatch = Stopwatch.StartNew();
 
                 var lexer = new Lexer(code);
                 var tokens = lexer.Tokenize();
                 var parser = new Parser(tokens);
                 var statements = parser.Parse();
                 interpreter.Run(statements);
+
+                stopwatch.Stop();
+                Console.WriteLine($"\n⏱ Execution Time: {stopwatch.ElapsedMilliseconds} ms");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error during file execution: {ex.Message}");
             }
         }
     }
