@@ -16,7 +16,7 @@ namespace JCore
             }
             else
             {
-                var path = string.Join(" ", args);  // Handles spaces
+                var path = string.Join(" ", args);  
                 RunFile(interpreter, path);
             }
         }
