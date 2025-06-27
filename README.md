@@ -23,3 +23,6 @@
 
 ```bash
 JCore.exe Examples\hello.jc
+```
+
+Or Drag n Drop to Jcore.exe
