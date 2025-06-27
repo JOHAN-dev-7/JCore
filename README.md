@@ -26,3 +26,6 @@ JCore.exe Examples\hello.jc
 ```
 
 Or Drag n Drop to Jcore.exe
+## License
+
+JCore is licensed under the [MIT License](LICENSE).
