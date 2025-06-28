@@ -18,12 +18,25 @@
 
 ## ✨ Features
 
-- ✅ **Constants & Variables:** `let`, `make`
-- ✅ **Full math expressions:** with operator precedence
-- ✅ **BigInteger math:** no overflow, infinite size!
-- ✅ **Simple commands:** `say`, `let`, `make`
-- ✅ **Inline & multiline comments:** `//`, `/* ... */`
-- ✅ **Script files** & **REPL** support
+✅ Constants & Variables: let, make
+
+✅ Full math expressions: with operator precedence
+
+✅ BigInteger math: no overflow, infinite size!
+
+✅ Simple commands: say, let, make
+
+✅ Function references: store and call functions like variables (supports native and user-defined functions)
+
+✅ Native functions: like jcore.getTime() with function reference and live call support
+
+✅ User-defined functions: def fun name() { ... } with full call support
+
+✅ Proper function/class error reporting: detects undefined functions and non-callable variables
+
+✅ Inline & multiline comments: //, /* ... */
+
+✅ Script files & REPL support
 
 ---
 
