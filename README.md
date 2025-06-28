@@ -5,8 +5,8 @@
 <h1 align="center">JCore — Johan's Interpreted Language</h1>
 
 <p align="center">
-  <b>Ultra-fast, minimal scripting language in C#.</b>  
-  <i>MIT licensed, runs anywhere .NET NativeAOT runs!</i>
+  <b>Ultra-fast, minimal scripting language made in C#.</b>  
+  <i>MIT licensed, runs anywhere .NET NativeAOT!</i>
 </p>
 
 <p align="center">
